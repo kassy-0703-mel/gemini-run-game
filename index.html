@@ -60,17 +60,24 @@
                 <span>管理者メニュー</span>
             </button>
         </div>
-        <div id="game-screen" class="screen flex-col items-center relative">
-            <div class="game-hud">
-                <div class="hud-item">
-                    <span>スコア: </span><span id="score-display">0</span>
+        <div id="game-screen" class="screen flex-col items-center">
+            <!-- UIとCanvasをまとめる新しいコンテナ -->
+            <div id="game-area-container">
+                <!-- スコアとタイマーのUI -->
+                <div class="game-hud">
+                    <div class="hud-item">
+                        <span>スコア: </span><span id="score-display">0</span>
+                    </div>
+                    <div class="hud-item">
+                        <span>タイム: </span><span id="timer-display">60</span>
+                    </div>
                 </div>
-                <div class="hud-item">
-                    <span>タイム: </span><span id="timer-display">60</span>
+                <!-- Canvasとポップアップを囲むコンテナ -->
+                <div class="relative flex-shrink-0">
+                    <canvas id="game-canvas"></canvas>
+                    <div id="effect-display" class="absolute top-4 left-1/2 -translate-x-1/2 bg-yellow-200 text-yellow-800 font-bold px-4 py-2 rounded-full shadow-lg text-lg transition-opacity duration-300 opacity-0 z-20"></div>
                 </div>
             </div>
-            <canvas id="game-canvas"></canvas>
-            <div id="effect-display" class="absolute top-4 left-1/2 -translate-x-1/2 bg-yellow-200 text-yellow-800 font-bold px-4 py-2 rounded-full shadow-lg text-lg transition-opacity duration-300 opacity-0 z-20"></div>
             <p class="mt-2 text-gray-600">クリックまたはタップでジャンプ！</p>
             <button id="jump-button" class="mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl">ジャンプ！</button>
             <div class="mt-4 p-4 bg-gray-200 rounded-lg text-left text-sm w-full shadow-inner">

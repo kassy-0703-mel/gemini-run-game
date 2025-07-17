@@ -45,7 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         displays: { score: document.getElementById('score-display'), timer: document.getElementById('timer-display'), finalScore: document.getElementById('final-score'), effect: document.getElementById('effect-display'), adminMessage: document.getElementById('admin-message'), },
         inputs: { playerName: document.getElementById('player-name'), adminPassword: document.getElementById('admin-password'), },
-        titleImage: document.getElementById('title-image'), canvas: document.getElementById('game-canvas'),
+        titleImage: document.getElementById('title-image'),
+        canvas: document.getElementById('game-canvas'),
+        gameAreaContainer: document.getElementById('game-area-container'), // 新しいコンテナを追加
         rankingForm: document.getElementById('ranking-form'), rankingList: document.getElementById('ranking-list'),
         loadingOverlay: document.getElementById('loading-overlay'),
         audioPopup: document.getElementById('audio-popup'),
@@ -813,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     async function displayRankings() {
         const rankings = await getRankings();
-        dom.rankingList.innerHTML = rankings.length === 0 ? '<li>まだ誰もプレイしていません。</li>' :
+        dom.rankingList.innerHTML = rankings.length === 0 ? '<li>まだ誰もプレイしていません��</li>' :
             rankings.map((r, index) => `
                 <li class="flex justify-between p-2 rounded ${index % 2 === 0 ? 'bg-gray-100' : ''}">
                     <span>${index + 1}. ${r.name}</span>
