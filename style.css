@@ -85,26 +85,18 @@ button:active {
 /* ゲームHUD（スコアやタイマー）のスタイル */
 .game-hud {
     font-family: 'DotGothic16', sans-serif;
-    font-size: 2rem; /* 32px */
-    color: white;
-    text-shadow: 
-        2px 2px 0 #000,
-        -2px 2px 0 #000,
-        2px -2px 0 #000,
-        -2px -2px 0 #000,
-        2px 0px 0 #000,
-        0px 2px 0 #000,
-        -2px 0px 0 #000,
-        0px -2px 0 #000;
+    font-size: 1.5rem; /* 24px */
+    color: #374151; /* ダークグレー */
+    text-shadow: 1px 1px 0 #ffffff;
     padding: 0.5rem 1rem;
     width: 100%;
     display: flex;
     justify-content: space-between;
-    position: absolute;
-    top: 10px;
-    left: 0;
-    z-index: 10;
-    pointer-events: none; /* 下のキャンバスを操作できるように */
+    background-color: rgba(229, 231, 235, 0.8); /* 少し透明な背��� */
+    border-radius: 0.5rem;
+    margin-bottom: 1rem; /* キャンバスとの間に余白を追加 */
+    border: 2px solid #d1d5db;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .hud-item {
