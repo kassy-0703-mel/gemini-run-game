@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>新郎新婦の筑波ダッシュ！ (仮)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+
+    <!-- ローディングオーバーレイ -->
+    <div id="loading-overlay">
+        <div class="loader"></div>
+        <p>Now Loading...</p>
+    </div>
+    <!-- (HTML部分は変更なし) -->
+    <div id="audio-popup">
+        <div class="popup-content">
+            <h2 class="text-2xl font-bold mb-6">🎵 このゲームは音声が再生されます 🎵</h2>
+            <button id="audio-popup-button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl">
+                クリックして開始
+            </button>
+        </div>
+    </div>
+
+    <div id="game-container" class="w-full max-w-2xl mx-auto p-4 text-center">
+        <!-- (HTML部分は変更なし) -->
+        <div id="title-screen" class="screen flex-col items-center justify-center space-y-8 relative">
+            <img id="title-image" src="images/title.png" alt="ゲームタイトル画像" class="w-full max-w-lg mx-auto mb-8 rounded-lg shadow-lg cursor-pointer">
+            <div class="space-y-4 mb-8">
+                <button id="ranking-button" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg text-xl flex items-center justify-center space-x-2">
+                    <i data-lucide="trophy"></i>
+                    <span>ランキング</span>
+                </button>
+            </div>
+            <div class="bg-gradient-to-br from-blue-100 to-purple-100 p-8 rounded-xl shadow-2xl text-left w-full max-w-md mb-8 border-4 border-blue-400 transform hover:scale-105 transition-transform duration-300">
+                <h2 class="text-3xl font-extrabold mb-6 text-center text-blue-700 drop-shadow-md">遊び方</h2>
+                <ul class="list-disc list-inside space-y-3 text-gray-800 text-lg">
+                    <li><strong>目的:</strong> 障害物を避けながら、できるだけ長く走り続け、ハイスコアを目指そう！</li>
+                    <li><strong>ボーナス:</strong> 60秒間走り切ると、クリアボーナスとして2500点がもらえるよ！</li>
+                    <li><strong>操作:</strong> ボタンをタップしてジャンプ！２段ジャンプもできるよ！</li>
+                    <li><strong>アイテム:</strong>
+                        <ul class="list-circle list-inside ml-6 mt-2 space-y-2">
+                            <li><img src="images/item_score_up.png" alt="ちあき" class="w-6 h-6 inline-block mr-2 align-middle"> <span class="font-semibold">ちあき&hearts;:</span> スコアが500点アップ！</li>
+                            <li><img src="images/item_invincible.png" alt="ラーメン" class="w-6 h-6 inline-block mr-2 align-middle"> <span class="font-semibold">ラーメン:</span> ちょっとだけ無敵になる！</li>
+                            <li><img src="images/item_speed_up.png" alt="ギター" class="w-6 h-6 inline-block mr-2 align-middle"> <span class="font-semibold">ギター:</span> しばらく移動速度アップ！</li>
+                            <li><img src="images/item_jump_up.png" alt="お酒" class="w-6 h-6 inline-block mr-2 align-middle"> <span class="font-semibold">お酒:</span> しばらくジャンプ力アップ！</li>
+                        </ul>
+                    </li>
+                    <li><strong>ゲームオーバー:</strong> 障害物にぶつかるとゲームオーバー。</li>
+                </ul>
+            </div>
+            <button id="admin-button" class="mt-4 bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg text-xl flex items-center justify-center space-x-2">
+                <i data-lucide="settings"></i>
+                <span>管理者メニュー</span>
+            </button>
+        </div>
+        <div id="game-screen" class="screen flex-col items-center relative">
+            <div class="w-full flex justify-between text-2xl font-bold p-2 game-hud">
+                <div class="hud-item">
+                    <span>スコア: </span><span id="score-display">0</span>
+                </div>
+                <div class="hud-item">
+                    <span>タイム: </span><span id="timer-display">60</span>
+                </div>
+            </div>
+            <div id="effect-display" class="absolute top-14 bg-yellow-200 text-yellow-800 font-bold px-4 py-2 rounded-full shadow-lg text-lg transition-opacity duration-300 opacity-0"></div>
+            <canvas id="game-canvas"></canvas>
+            <p class="mt-2 text-gray-600">クリックまたはタップでジャンプ！</p>
+            <button id="jump-button" class="mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl">ジャンプ！</button>
+            <div class="mt-4 p-4 bg-gray-200 rounded-lg text-left text-sm w-full shadow-inner">
+                <h3 class="font-bold text-center mb-2 text-gray-800">アイテムの効果</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center"><img src="images/item_score_up.png" alt="ちあき" class="w-5 h-5 mr-3"><span><strong>ちあき&hearts;:</strong> スコアが500点アップ！</span></div>
+                    <div class="flex items-center"><img src="images/item_invincible.png" alt="ラーメン" class="w-5 h-5 mr-3"><span><strong>ラーメン:</strong> ちょっとだけ無敵になる！</span></div>
+                    <div class="flex items-center"><img src="images/item_speed_up.png" alt="ギター" class="w-5 h-5 mr-3"><span><strong>ギター:</strong> しばらく移動速度アップ！</span></div>
+                    <div class="flex items-center"><img src="images/item_jump_up.png" alt="お酒" class="w-5 h-5 mr-3"><span><strong>お酒:</strong> しばらくジ���ンプ力アップ！</span></div>
+                </div>
+            </div>
+        </div>
+        <div id="game-over-screen" class="screen flex-col items-center justify-center space-y-8">
+            <div class="text-center bg-gradient-to-br from-yellow-100 to-orange-200 p-8 rounded-2xl shadow-2xl border-4 border-yellow-400 w-full max-w-md">
+                <h3 class="text-3xl font-bold text-yellow-800 mb-4 drop-shadow-md">今回のスコア</h3>
+                <p id="final-score" class="text-7xl font-extrabold text-yellow-900 tracking-tight">0</p>
+            </div>
+            <form id="ranking-form" class="w-full max-w-sm space-y-4">
+                <input type="text" id="player-name" placeholder="プレイヤー名を入力" class="w-full p-3 border rounded-lg text-center" required maxlength="10">
+                <button type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl">ランキングに登録</button>
+            </form>
+            <button id="back-to-title-from-gameover" class="mt-4 text-gray-600 hover:underline">タイトルへ戻る</button>
+        </div>
+        <div id="ranking-screen" class="screen flex-col items-center justify-center w-full">
+            <h2 class="text-4xl font-bold mb-6">ランキング</h2>
+            <ol id="ranking-list" class="list-decimal list-inside bg-white p-6 rounded-lg shadow-md w-full max-w-md text-left space-y-2"></ol>
+            <button id="back-to-title-button" class="mt-8 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">タイトルへ戻る</button>
+        </div>
+        <div id="admin-screen" class="screen flex-col items-center justify-center space-y-6">
+            <h2 class="text-4xl font-bold mb-6">管理者メニュー</h2>
+            <div class="w-full max-w-sm space-y-4">
+                <input type="password" id="admin-password" placeholder="管理者パスワード" class="w-full p-3 border rounded-lg text-center">
+                <button id="reset-ranking-button" class="w-full bg-red-500 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg text-xl">ランキングをリセット</button>
+                <p id="admin-message" class="text-center text-sm text-gray-600"></p>
+            </div>
+            <button id="back-to-title-from-admin" class="mt-4 text-gray-600 hover:underline">タイトルへ戻る</button>
+        </div>
+    </div>
+
+<script src="script.js"></script>
+</body>
+</html>

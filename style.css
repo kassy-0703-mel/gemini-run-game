@@ -1,0 +1,134 @@
+body { -webkit-user-select: none; user-select: none; }
+html, body {
+    /* overflow: hidden; を削除し、下のクラスで制御 */
+    touch-action: manipulation; /* スクロールやダブルタップズームを無効化 */
+}
+/* スクロールを禁止するためのクラス */
+body.no-scroll {
+    overflow: hidden;
+}
+.screen { display: none; }
+.screen.active { display: flex; }
+canvas {
+    background-color: #ffffff;
+    border: 2px solid #333;
+    -webkit-tap-highlight-color: transparent; /* タップ時のハイライトを消す */
+}
+/* ローディングオーバーレイ用のスタイルを追加 */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    z-index: 9999;
+    flex-direction: column;
+    gap: 1rem;
+}
+.loader {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+/* 音声確認ポップアップ用のスタイルを追加 */
+#audio-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: black;
+    display: none; /* 初期状態は非表示 */
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+.popup-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    text-align: center;
+    max-width: 90%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* ボタンアニメーション用のスタイルを追加 */
+button {
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ゲームHUD（スコアやタイマー）のスタイル */
+.game-hud {
+    font-family: 'DotGothic16', sans-serif;
+    font-size: 2rem; /* 32px */
+    color: white;
+    text-shadow: 
+        2px 2px 0 #000,
+        -2px 2px 0 #000,
+        2px -2px 0 #000,
+        -2px -2px 0 #000,
+        2px 0px 0 #000,
+        0px 2px 0 #000,
+        -2px 0px 0 #000,
+        0px -2px 0 #000;
+    padding: 0.5rem 1rem;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    position: absolute;
+    top: 10px;
+    left: 0;
+    z-index: 10;
+    pointer-events: none; /* 下のキャンバスを操作できるように */
+}
+
+.hud-item {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    border: 3px solid #fff;
+}
+
+/* 画面遷移アニメーション */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.98); }
+}
+
+.screen.fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+.screen.fade-out {
+    animation: fadeOut 0.3s ease-in forwards;
+}
