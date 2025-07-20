@@ -764,12 +764,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
     function isColliding(rect1, rect2) { return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y; }
     function resizeCanvas() {
-        const container = dom.canvas.parentElement;
-        if (container.clientWidth === 0) return;
+        const container = dom.gameAreaContainer;
+        if (!container || container.clientWidth === 0) return;
 
         const availableWidth = container.clientWidth;
-        const availableHeight = window.innerHeight * 0.8;
-        const scale = Math.min(availableWidth / CONFIG.GAME_WIDTH, availableHeight / CONFIG.GAME_HEIGHT);
+        // HUDやボタンの高さを考慮して、利用可能な高さを計算
+        const availableHeight = container.clientHeight - 150; 
+
+        const scale = Math.min(
+            availableWidth / CONFIG.GAME_WIDTH,
+            availableHeight / CONFIG.GAME_HEIGHT
+        );
+
         const displayWidth = CONFIG.GAME_WIDTH * scale;
         const displayHeight = CONFIG.GAME_HEIGHT * scale;
 
@@ -778,6 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.canvas.style.width = `${displayWidth}px`;
         dom.canvas.style.height = `${displayHeight}px`;
 
+        // プレイヤーが地面の下に埋まらないように再配置
         if (state.groundY && state.player) {
             if (state.player.y + state.player.height > state.groundY) {
                 state.player.y = state.groundY - state.player.height;

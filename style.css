@@ -120,3 +120,82 @@ button:active {
 .screen.fade-out {
     animation: fadeOut 0.3s ease-in forwards;
 }
+
+/* ジャンプボタンのアクティブアニメーション */
+#jump-button.active-animation {
+    transform: scale(1.1);
+    background-color: #22c55e; /* より明るい緑 */
+}
+
+/* ゲームエリアコンテナのスタイル */
+#game-area-container {
+    width: 100%;
+    height: 100%; /* 高さを100%に */
+    max-width: 1200px; /* PCでの最大幅を少し広げる */
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 中央揃えを追加 */
+}
+
+/* ゲーム画面全体の高さを調整 */
+#game-screen {
+    width: 100%;
+    height: 100vh; /* 画面の高さ全体を使う */
+    padding: 1rem;
+    box-sizing: border-box;
+    justify-content: center; /* 中央揃え */
+}
+
+/* キャンバスの親要素がflex-shrinkしないようにする */
+.relative.flex-shrink-0 {
+    flex-shrink: 1; /* 縮小を許可 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 0; /* flexboxのバグ対策 */
+}
+
+/* フォントのスタイル */
+body, button, input {
+    font-family: 'DotGothic16', sans-serif;
+}
+
+/* ランキングリストのスタイル */
+#ranking-list li {
+    font-size: 1.1rem; /* 17.6px */
+}
+
+/* タイトル画像のカーソル */
+#title-image {
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+#title-image:hover {
+    transform: scale(1.03);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* スマホ横画面用のスタイル */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    #game-screen {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+    }
+    .mt-4.p-4.bg-gray-200 {
+        flex-shrink: 0;
+        width: 200px; /* 説明欄の幅を固定 */
+        align-self: stretch;
+        font-size: 0.8rem;
+    }
+    #jump-button {
+        height: 80%;
+        writing-mode: vertical-rl;
+        padding: 1rem 0.5rem;
+    }
+    .mt-2.text-gray-600 {
+        display: none;
+    }
+}
