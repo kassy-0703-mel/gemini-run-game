@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         GRAVITY: 0.6, PLAYER_JUMP_FORCE: -15, PLAYER_WIDTH: 60, PLAYER_HEIGHT: 60,
         GAME_WIDTH: 900, GAME_HEIGHT: 500, GROUND_Y_OFFSET: 50, BASE_GAME_SPEED: 5,
         GAME_SPEED_INCREMENT: 0.003, INITIAL_TIMER: 60,
-        API_BASE_URL: 'https://gemini-run-game-backend.onrender.com',
+        API_BASE_URL: 'https://gemini-run-game-backend-ta6z.onrender.com',
         GAME_OVER_SEQUENCE_DURATION: 45,
     };
     const ASSET_PATHS = {
