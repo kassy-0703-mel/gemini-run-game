@@ -764,13 +764,36 @@ document.addEventListener('DOMContentLoaded', () => {
     function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
     function isColliding(rect1, rect2) { return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y; }
     function resizeCanvas() {
-        const container = dom.gameAreaContainer;
-        if (!container || container.clientWidth === 0) return;
+        const gameScreen = dom.screens.game;
+        if (!gameScreen || gameScreen.clientWidth === 0) return;
 
-        const availableWidth = container.clientWidth;
-        // HUDやボタンの高さを考慮して、利用可能な高さを計算
-        const availableHeight = container.clientHeight - 150; 
+        // 画面全体の利用可能な幅と高さを取得
+        const availableWidth = gameScreen.clientWidth;
+        let availableHeight = window.innerHeight;
 
+        // キャンバス以外のUI要素の高さを取得して、利用可能な高さから引いていく
+        const hud = gameScreen.querySelector('.game-hud');
+        const jumpText = gameScreen.querySelector('.mt-2.text-gray-600');
+        const jumpButton = dom.buttons.jump;
+        const itemDesc = gameScreen.querySelector('.mt-4.p-4');
+        
+        // #game-screenの上下padding (1rem * 2 = 32px)
+        const screenPadding = 32; 
+        availableHeight -= screenPadding;
+
+        // 各UI要素の高さを引く
+        if (hud) availableHeight -= hud.offsetHeight;
+        if (jumpText) availableHeight -= jumpText.offsetHeight;
+        if (jumpButton) availableHeight -= jumpButton.offsetHeight;
+        if (itemDesc) availableHeight -= itemDesc.offsetHeight;
+
+        // 要素間のマージン(mt-2, mt-4など)も引く
+        availableHeight -= (8 + 16 + 16); // テキストの上、ボタンの上、説明の上のマージン
+
+        // 計算後の高さが小さくなりすぎないように最小値を保証
+        availableHeight = Math.max(availableHeight, 200);
+
+        // アスペクト比を保ったままスケールを計算
         const scale = Math.min(
             availableWidth / CONFIG.GAME_WIDTH,
             availableHeight / CONFIG.GAME_HEIGHT
@@ -779,6 +802,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const displayWidth = CONFIG.GAME_WIDTH * scale;
         const displayHeight = CONFIG.GAME_HEIGHT * scale;
 
+        // Canvasの内部解像度と表示サイズを設定
         dom.canvas.width = CONFIG.GAME_WIDTH;
         dom.canvas.height = CONFIG.GAME_HEIGHT;
         dom.canvas.style.width = `${displayWidth}px`;
