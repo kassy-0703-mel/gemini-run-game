@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameInterval = null, animationFrameId = null;
     let assetsLoaded = false;
     let debugInfo = {};
+    let lastTime = 0; // デルタタイム計算用
 
     // =================================================================
     // 4. 初期化とセットアップ (Initialization and Setup)
@@ -153,6 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
             itemSpawnCooldown: getRandomInt(300, 500), invincibilityTimer: 0, speedUpTimer: 0, jumpUpTimer: 0,
             isGameOverSequenceActive: false, gameOverEffectTimer: 0,
             currentScreen: 'title', groundY: groundY, isSwitchingScreen: false,
+            deltaTime: 0, // デルタタイムを追加
         };
     }
 
@@ -184,11 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 startGameOverSequence();
             }
         }, 1000);
+        
+        lastTime = performance.now(); // 開始時間を記録
         gameLoop();
     }
 
-    function gameLoop() {
-        update(); draw();
+    function gameLoop(timestamp) {
+        if (!timestamp) timestamp = performance.now();
+        state.deltaTime = (timestamp - lastTime) / (1000 / 60); // 60FPSを基準とした経過時間の比率
+        lastTime = timestamp;
+
+        update(); 
+        draw();
+
         if (state.currentScreen === 'game' || state.isGameOverSequenceActive) {
             animationFrameId = requestAnimationFrame(gameLoop);
         }
@@ -222,12 +232,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // =================================================================
     function update() {
         if (state.currentScreen !== 'game' && !state.isGameOverSequenceActive) return;
+        
+        const dt = state.deltaTime;
+        if (dt === 0 || isNaN(dt)) return; // デルタタイムが不正な場合は更新しない
+
         state.frameCount++;
 
         if (state.isGameOverSequenceActive) {
-            state.gameOverEffectTimer--;
+            state.gameOverEffectTimer -= dt;
             if (state.gameOverEffectTimer <= 0) endGame();
-            updateEntities(state.visualEffects);
+            updateEntities(state.visualEffects, 0, dt);
             return;
         }
 
@@ -243,35 +257,44 @@ document.addEventListener('DOMContentLoaded', () => {
         // 残像の更新と削除
         for (let i = state.afterimages.length - 1; i >= 0; i--) {
             const afterimage = state.afterimages[i];
-            afterimage.x -= state.gameSpeed; // 左にスクロールさせる
-            afterimage.life--;
+            afterimage.x -= state.gameSpeed * dt; // デルタタイムを適用
+            afterimage.life -= dt; // デルタタイムを適用
             if (afterimage.life <= 0) {
                 state.afterimages.splice(i, 1);
             }
         }
 
-        state.backgroundScrollX -= state.gameSpeed * 0.5;
-        state.groundScrollX -= state.gameSpeed;
-        state.baseSpeed += CONFIG.GAME_SPEED_INCREMENT;
+        state.backgroundScrollX -= state.gameSpeed * 0.5 * dt;
+        state.groundScrollX -= state.gameSpeed * dt;
+        state.baseSpeed += CONFIG.GAME_SPEED_INCREMENT * (dt / 60); // 1秒あたりで増加するように調整
         if (state.speedUpTimer <= 0) state.gameSpeed = state.baseSpeed;
 
-        state.player.update();
-        updateEntities(state.obstacles, state.gameSpeed);
-        updateEntities(state.items, state.gameSpeed);
-        updateEntities(state.visualEffects);
+        state.player.update(dt);
+        updateEntities(state.obstacles, state.gameSpeed, dt);
+        updateEntities(state.items, state.gameSpeed, dt);
+        updateEntities(state.visualEffects, 0, dt);
         
-        manageSpawning();
+        manageSpawning(dt);
         handleCollisions();
-        updateItemEffects();
-        state.score++;
+        updateItemEffects(dt);
+        state.score += Math.round(1 * dt); // スコアもデルタタイムを考慮
     }
     
-    function updateEntities(entities, speed = 0) {
+    function updateEntities(entities, speed = 0, dt) {
         for (let i = entities.length - 1; i >= 0; i--) {
             const e = entities[i];
-            if (speed > 0) e.x -= speed;
-            if (e.update) e.update();
-            if ((e.x + (e.width || 0) < 0) || (e.life && --e.life <= 0)) entities.splice(i, 1);
+            if (speed > 0) e.x -= speed * dt;
+            if (e.update) e.update(dt);
+            if (e.life) {
+                e.life -= dt;
+                if (e.life <= 0) {
+                    entities.splice(i, 1);
+                    continue;
+                }
+            }
+            if (e.x + (e.width || 0) < 0) {
+                entities.splice(i, 1);
+            }
         }
     }
 
@@ -406,9 +429,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 ctx.restore();
             },
-            update() {
-                this.velocityY += CONFIG.GRAVITY;
-                this.y += this.velocityY;
+            update(dt) {
+                this.velocityY += CONFIG.GRAVITY * dt;
+                this.y += this.velocityY * dt;
                 if (this.y > groundY - this.height) {
                     this.y = groundY - this.height;
                     this.velocityY = 0;
@@ -441,8 +464,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function manageSpawning() {
-        if (--state.spawnCooldown <= 0) {
+    function manageSpawning(dt) {
+        state.spawnCooldown -= dt;
+        if (state.spawnCooldown <= 0) {
             const r = Math.random();
             if (state.timer > 40) { createObstacle('low'); state.spawnCooldown = getRandomInt(90, 120); }
             else if (state.timer > 20) {
@@ -456,10 +480,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.spawnCooldown = getRandomInt(50, 80);
             }
         }
-        if (--state.itemSpawnCooldown <= 0) {
+        state.itemSpawnCooldown -= dt;
+        if (state.itemSpawnCooldown <= 0) {
             const itemTypes = ['scoreUp', 'scoreUp', 'scoreUp', 'scoreUp', 'scoreUp', 'scoreUp', 'invincible', 'speedUp', 'jumpUp'];
             createItem(itemTypes[getRandomInt(0, itemTypes.length - 1)]);
-            state.itemSpawnCooldown = getRandomInt(70, 120);
+            state.itemSpawnCooldown = getRandomInt(200, 350); // スポーン間隔を少し広げる
         }
     }
     
@@ -489,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function createFallingObstacle() {
         state.obstacles.push({
             x: getRandomInt(CONFIG.GAME_WIDTH, CONFIG.GAME_WIDTH * 1.5), y: -30, width: 48.75, height: 48.75, vy: 4,
-            update() { this.y += this.vy; },
+            update(dt) { this.y += this.vy * dt; },
             draw() { if (assets.fallingObstacle) ctx.drawImage(assets.fallingObstacle, this.x, this.y, this.width, this.height); }
         });
     }
@@ -497,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function createFastObstacle() {
         state.obstacles.push({
             x: CONFIG.GAME_WIDTH, y: state.groundY - 67.5, width: 112.5, height: 67.5, vx: -4,
-            update() { this.x += this.vx; },
+            update(dt) { this.x += this.vx * dt; },
             draw() { if (assets.fastObstacle) ctx.drawImage(assets.fastObstacle, this.x, this.y, this.width, this.height); }
         });
     }
@@ -618,22 +643,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // =================================================================
     // 9. エフェクトとUI (Effects and UI)
     // =================================================================
-    function updateItemEffects() {
+    function updateItemEffects(dt) {
         let effectMessage = '';
         if (state.invincibilityTimer > 0) {
-            state.invincibilityTimer--;
+            state.invincibilityTimer -= dt;
             effectMessage = `無敵！ 残り ${Math.ceil(state.invincibilityTimer / 60)} 秒`;
-            if (state.invincibilityTimer <= 0) showEffectMessage('ラーメン終了', 2);
+            if (state.invincibilityTimer <= 0) {
+                state.invincibilityTimer = 0;
+                showEffectMessage('ラーメン終了', 2);
+            }
         }
         if (state.speedUpTimer > 0) {
-            state.speedUpTimer--;
+            state.speedUpTimer -= dt;
             effectMessage = `移動速度アップ！ 残り ${Math.ceil(state.speedUpTimer / 60)} 秒`;
-            if (state.speedUpTimer <= 0) { state.gameSpeed = state.baseSpeed; showEffectMessage('ギター終了', 2); }
+            if (state.speedUpTimer <= 0) {
+                state.speedUpTimer = 0;
+                state.gameSpeed = state.baseSpeed; 
+                showEffectMessage('ギター終了', 2); 
+            }
         }
         if (state.jumpUpTimer > 0) {
-            state.jumpUpTimer--;
+            state.jumpUpTimer -= dt;
             effectMessage = `ジャンプ力アップ！ 残り ${Math.ceil(state.jumpUpTimer / 60)} 秒`;
-            if (state.jumpUpTimer <= 0) { state.player.jumpForce = CONFIG.PLAYER_JUMP_FORCE; showEffectMessage('お酒終了', 2); }
+            if (state.jumpUpTimer <= 0) {
+                state.jumpUpTimer = 0;
+                state.player.jumpForce = CONFIG.PLAYER_JUMP_FORCE; 
+                showEffectMessage('お酒終了', 2); 
+            }
         }
         if (effectMessage) {
             dom.displays.effect.textContent = effectMessage;
@@ -659,9 +695,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const { color = 'gold', size = 15, life = 60, vx = (Math.random() - 0.5) * 4, vy = (Math.random() - 0.5) * 4, gravity = 0.1, image = null } = options;
         state.visualEffects.push({
             life, image, x, y, vx, vy, size, color, gravity,
-            update() { this.x += this.vx; this.y += this.vy; this.vy += this.gravity; },
+            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.vy += this.gravity * dt; },
             draw() {
-                ctx.globalAlpha = this.life / 60;
+                ctx.globalAlpha = Math.max(0, this.life / 60);
                 if (this.image) { ctx.drawImage(this.image, this.x, this.y, this.size, this.size); }
                 else { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2); ctx.fill(); }
             }
@@ -672,9 +708,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const { color = 'white', size = 20, life = 60, vy = -1 } = options;
         state.visualEffects.push({
             life, text, x, y, vy, color, size,
-            update() { this.y += this.vy; },
+            update(dt) { this.y += this.vy * dt; },
             draw() {
-                ctx.globalAlpha = this.life / 60;
+                ctx.globalAlpha = Math.max(0, this.life / 60);
                 ctx.fillStyle = this.color;
                 ctx.font = `${this.size}px Arial`;
                 ctx.textAlign = 'center';
