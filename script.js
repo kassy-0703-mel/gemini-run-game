@@ -815,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     async function displayRankings() {
         const rankings = await getRankings();
-        dom.rankingList.innerHTML = rankings.length === 0 ? '<li>まだ誰もプレイしていません��</li>' :
+        dom.rankingList.innerHTML = rankings.length === 0 ? '<li>まだ誰もプレイしていません！</li>' :
             rankings.map((r, index) => `
                 <li class="flex justify-between p-2 rounded ${index % 2 === 0 ? 'bg-gray-100' : ''}">
                     <span>${index + 1}. ${r.name}</span>
