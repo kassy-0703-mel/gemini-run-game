@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.backgroundScrollX -= state.gameSpeed * 0.5 * dt;
         state.groundScrollX -= state.gameSpeed * dt;
-        state.baseSpeed += CONFIG.GAME_SPEED_INCREMENT * (dt / 60); // 1秒あたりで増加するように調整
+        state.baseSpeed += CONFIG.GAME_SPEED_INCREMENT * dt; // デルタタイムを正しく適用
         if (state.speedUpTimer <= 0) state.gameSpeed = state.baseSpeed;
 
         state.player.update(dt);
@@ -499,29 +499,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 const img = type === 'low' ? assets.obstacleLow : assets.obstacleHigh;
                 if (img) ctx.drawImage(img, this.x, this.y, this.width, this.height);
             },
-            update(){}
+            update(dt){}
         };
         if (type === 'low') {
-            obstacle.width = 45; obstacle.height = 60;
+            obstacle.width = 45; 
+            obstacle.height = 60;
             obstacle.y = state.groundY - obstacle.height;
         } else {
-            obstacle.width = 90; obstacle.height = 120;
+            obstacle.width = 90; 
+            obstacle.height = 120;
             obstacle.y = state.groundY - obstacle.height;
         }
+        obstacle.collisionWidth = obstacle.width * 0.9;
+        obstacle.collisionHeight = obstacle.height * 0.9;
         state.obstacles.push(obstacle);
     }
 
     function createFallingObstacle() {
+        const width = 48.75;
+        const height = 48.75;
         state.obstacles.push({
-            x: getRandomInt(CONFIG.GAME_WIDTH, CONFIG.GAME_WIDTH * 1.5), y: -30, width: 48.75, height: 48.75, vy: 4,
+            x: getRandomInt(CONFIG.GAME_WIDTH, CONFIG.GAME_WIDTH * 1.5), y: -30, 
+            width: width, height: height,
+            collisionWidth: width * 0.9, collisionHeight: height * 0.9,
+            vy: 4,
             update(dt) { this.y += this.vy * dt; },
             draw() { if (assets.fallingObstacle) ctx.drawImage(assets.fallingObstacle, this.x, this.y, this.width, this.height); }
         });
     }
 
     function createFastObstacle() {
+        const width = 112.5;
+        const height = 67.5;
         state.obstacles.push({
-            x: CONFIG.GAME_WIDTH, y: state.groundY - 67.5, width: 112.5, height: 67.5, vx: -4,
+            x: CONFIG.GAME_WIDTH, y: state.groundY - height, 
+            width: width, height: height,
+            collisionWidth: width * 0.9, collisionHeight: height * 0.9,
+            vx: -4,
             update(dt) { this.x += this.vx * dt; },
             draw() { if (assets.fastObstacle) ctx.drawImage(assets.fastObstacle, this.x, this.y, this.width, this.height); }
         });
@@ -798,7 +812,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-    function isColliding(rect1, rect2) { return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y; }
+    function isColliding(rect1, rect2) {
+        const r1_width = rect1.collisionWidth || rect1.width;
+        const r1_height = rect1.collisionHeight || rect1.height;
+        const r2_width = rect2.collisionWidth || rect2.width;
+        const r2_height = rect2.collisionHeight || rect2.height;
+
+        const r1_x = rect1.x + (rect1.width - r1_width) / 2;
+        const r1_y = rect1.y + (rect1.height - r1_height) / 2;
+        const r2_x = rect2.x + (rect2.width - r2_width) / 2;
+        const r2_y = rect2.y + (rect2.height - r2_height) / 2;
+
+        return r1_x < r2_x + r2_width &&
+               r1_x + r1_width > r2_x &&
+               r1_y < r2_y + r2_height &&
+               r1_y + r1_height > r2_y;
+    }
     function resizeCanvas() {
         const gameScreen = dom.screens.game;
         if (!gameScreen || gameScreen.clientWidth === 0) return;
